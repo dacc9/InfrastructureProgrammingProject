@@ -1,0 +1,31 @@
+#cloud-config
+hostname: ${hostname}
+fqdn: ${fqdn}
+
+# Enable verbose cloud-init logging
+bootcmd:
+  - echo 'DEBUG' > /etc/cloud/cloud.cfg.d/05-logging-debug.cfg
+
+users:
+  - name: ansible
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ${ssh_key}
+    lock_passwd: true
+    create_home: true
+
+package_update: true
+package_upgrade: true
+packages:
+  - openssh-server
+  - qemu-guest-agent
+  - python3
+
+runcmd:
+  - systemctl enable --now ssh
+  - systemctl enable --now qemu-guest-agent
+
+final_message: "Cloud-init completed on ${hostname}"
+
