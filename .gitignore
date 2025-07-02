@@ -1,2 +1,28 @@
+# SSH keys
 ssh_keys/
+
+# Terraform state and related files
+*.tfstate
+*.tfstate.backup
+.terraform/
+crash.log
+terraform.tfvars
+override.tf
+override.tf.json
+*.tfplan
+
+# Ansible
+*.retry
+*.log
+inventory.ini  # If it's environment-specific or has secrets
+
+# Cloud images and other large binaries
 project_pool/
+*.img
+
+# Backup and temp files
+*~
+*.bak
+*.swp
+*.tmp
+.DS_Store
