@@ -29,9 +29,7 @@ ansible/playbooks/group_vars/*vars*.yml
 ansible/playbooks/group_vars/*_secrets.yml
 
 # Cloud images and other large binaries
-project_pool/*.qcow2
-project_pool/*.iso
-project_pool/*.img
+project_pool/*
 
 
 # Backup and temp files
