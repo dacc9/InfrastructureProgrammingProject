@@ -1,0 +1,38 @@
+global
+    log /dev/log    local0
+    log /dev/log    local1 notice
+    daemon
+    maxconn 2048
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client 50000
+    timeout server 50000
+
+frontend http_front
+    bind *:80
+    acl is_storage hdr(host) -i storage.{{ dns_zone }}
+    acl is_mail hdr(host) -i mail.{{ dns_zone }}
+    acl is_db hdr(host) -i db.{{ dns_zone }}
+    acl is_proxy hdr(host) -i proxy.{{ dns_zone }}
+
+    use_backend storage_backend if is_storage
+    use_backend mail_backend if is_mail
+    use_backend db_backend if is_db
+    use_backend proxy_backend if is_proxy
+
+backend storage_backend
+    server nextcloud {{ bind_domain_ip_map.storage }}:80
+
+backend mail_backend
+    server mail {{ bind_domain_ip_map.mail }}:25
+
+backend db_backend
+    server database {{ bind_domain_ip_map.db }}:5432
+
+backend proxy_backend
+    server proxy 127.0.0.1:80

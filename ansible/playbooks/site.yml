@@ -1,0 +1,28 @@
+---
+- name: Configure Load Balancer
+  hosts: load_balancer
+  become: true
+  roles:
+    - bind9
+    - haproxy
+
+- name: Configure Nextcloud Server
+  hosts: next_cloud
+  become: true
+  roles:
+    - nextcloud
+    - nfs_client
+
+- name: Configure Mail Server
+  hosts: mail_server
+  become: true
+  roles:
+    - postfix
+    - nfs_client
+
+- name: Configure PostgreSQL Server
+  hosts: database_server
+  become: true
+  roles:
+    - postgresql
+    - nfs_export

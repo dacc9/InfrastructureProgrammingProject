@@ -1,0 +1,5 @@
+nfs_share_path: /srv/nfs_share
+nfs_clients:
+  - 10.0.0.20
+  - 10.0.0.30
+nfs_export_options: rw,sync,no_subtree_check

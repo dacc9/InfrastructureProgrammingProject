@@ -1,0 +1,6 @@
+dns_zone: infra.prog
+bind_domain_ip_map:
+  proxy: 10.0.0.10
+  storage: 10.0.0.20
+  mail: 10.0.0.30
+  db: 10.0.0.40

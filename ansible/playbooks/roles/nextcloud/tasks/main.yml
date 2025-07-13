@@ -1,0 +1,42 @@
+- name: Install Nextcloud dependencies
+  apt:
+    name:
+      - apache2
+      - php
+      - php-mysql
+      - libapache2-mod-php
+      - php-xml
+      - php-curl
+      - php-zip
+      - php-gd
+      - php-mbstring
+      - unzip
+      - wget
+    state: present
+    update_cache: true
+
+- name: Download Nextcloud
+  get_url:
+    url: http://download.nextcloud.com/server/releases/latest.zip
+    dest: /tmp/nextcloud.zip
+
+- name: Unarchive Nextcloud
+  unarchive:
+    src: /tmp/nextcloud.zip
+    remote_src: yes
+
+- name: Set permissions
+  file:
+    path: /var/www/html/nextcloud
+    owner: www-data
+    group: www-data
+    recurse: yes
+
+- name: Enable Apache rewrite
+  command: a2enmod rewrite
+
+- name: Restart Apache
+  service:
+    name: apache2
+    state: restarted
+

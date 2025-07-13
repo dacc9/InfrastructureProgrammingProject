@@ -1,5 +1,7 @@
 # SSH keys
 ssh_keys/
+*.pem
+*.key
 
 # Terraform state and related files
 *.tfstate
@@ -13,12 +15,23 @@ override.tf.json
 
 # Ansible
 *.retry
+*.swp
+*.swo
+*.tmp
 *.log
-inventory.ini  # If it's environment-specific or has secrets
+*~
+inventory.ini
+__pychache__/
+.ansible/
+
+#Ansible Vault secrets
+ansible/playbooks/group_vars/*vars*.yml
+ansible/playbooks/group_vars/*_secrets.yml
 
 # Cloud images and other large binaries
-project_pool/
-*.img
+project_pool/*.qcow2
+project_pool/*.iso
+project_pool/ubuntu-*.img
 
 # Backup and temp files
 *~

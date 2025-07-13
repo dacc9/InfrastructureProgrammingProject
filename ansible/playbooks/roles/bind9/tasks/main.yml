@@ -1,0 +1,23 @@
+- name: Install bind9
+  apt:
+    name: bind9
+    state: present
+    update_cache: true
+
+- name: Configure named.conf.local
+  template:
+    src: named.conf.local.j2
+    dest: /etc/bind/named.conf.local
+  notify: Restart bind9
+
+- name: Add DNS zone file
+  template:
+    src: db.infra.prog.j2
+    dest: /etc/bind/db.infra.prog
+  notify: Restart bind9
+
+- name: Ensure bind9 is started and enabled
+  service:
+    name: bind9
+    state: started
+    enabled: true

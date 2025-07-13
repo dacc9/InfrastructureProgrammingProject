@@ -1,0 +1,24 @@
+---
+- name: Start specified Libvirt VMs
+  hosts: localhost  # Runs on the local machine managing the VMs
+  connection: local
+  tasks:
+    - name: Ensure VM list is provided and valid
+      ansible.builtin.fail:
+        msg: "No VMs specified. Use: ansible-playbook start_vms.yml -e 'vms=[\"vm1\",\"vm2\"]'"
+      when: vms is not defined or vms | length == 0
+
+    - name: Start requested VMs
+      community.libvirt.virt:  # Requires community.libvirt collection
+        name: "{{ item }}"
+        state: running
+      loop: "{{ vms }}"
+      register: start_results
+      ignore_errors: true  # Continue even if some VMs fail
+
+    - name: Report results
+      ansible.builtin.debug:
+        msg: "VM '{{ item.item }}': {{ 'Started' if item.changed else item.msg }}"
+      loop: "{{ start_results.results }}"
+      loop_control:
+        label: "{{ item.item }}"

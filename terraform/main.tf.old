@@ -14,14 +14,13 @@ provider "libvirt" {
 }
 
 locals {
-  root_dir     = abspath("${path.module}/..")
-  image_path   = "${local.root_dir}/project_pool/jammy-server-cloudimg-amd64.img"
-  image_exists = fileexists(local.image_path)
-  ssh_key      = trimspace(file("${local.root_dir}/ssh_keys/project_key.pub"))
-
-  names = ["load_balancer", "next_cloud", "mail_server", "database_server"]
-  ips   = ["10.0.0.10", "10.0.0.20", "10.0.0.30", "10.0.0.40"]
-  macs  = ["52:54:00:aa:bb:10", "52:54:00:aa:bb:20", "52:54:00:aa:bb:30", "52:54:00:aa:bb:40"]
+  root_dir      = abspath("${path.module}/..")
+  image_path    = "${local.root_dir}/project_pool/jammy-server-cloudimg-amd64.img"
+  image_exists  = fileexists(local.image_path)
+  ssh_key       = trimspace(file("${local.root_dir}/ssh_keys/project_key.pub"))
+  ips           = ["10.0.0.10", "10.0.0.20", "10.0.0.30", "10.0.0.40"]
+  macs          = ["52:54:00:aa:bb:10", "52:54:00:aa:bb:20", "52:54:00:aa:bb:30", "52:54:00:aa:bb:40"]
+  hostname_base = "vm"
 }
 
 resource "libvirt_pool" "pool" {
@@ -32,7 +31,6 @@ resource "libvirt_pool" "pool" {
 
 resource "null_resource" "download_image" {
   count = local.image_exists ? 0 : 1
-
   provisioner "local-exec" {
     command = <<EOT
       wget -q -nc "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img" \
@@ -43,22 +41,23 @@ resource "null_resource" "download_image" {
 
 resource "libvirt_volume" "base" {
   name           = "ubuntu-jammy.qcow2"
-  source         = local.image_path
+  source         = "${local.root_dir}/project_pool/jammy-server-cloudimg-amd64.img"
   format         = "qcow2"
   pool           = libvirt_pool.pool.name
   depends_on     = [null_resource.download_image]
 }
 
 resource "libvirt_volume" "disk" {
-  count          = length(local.names)
-  name           = "${local.names[count.index]}.qcow2"
+  count          = 4
+  name           = "${local.hostname_base}-${count.index}.qcow2"
   base_volume_id = libvirt_volume.base.id
   size           = 10 * 1024 * 1024 * 1024
   pool           = libvirt_pool.pool.name
 }
 
+# Fixed: Single cloud-config part only
 data "cloudinit_config" "vm" {
-  count          = length(local.names)
+  count          = 4
   gzip           = false
   base64_encode  = false
 
@@ -66,18 +65,20 @@ data "cloudinit_config" "vm" {
     content_type = "text/cloud-config"
     content = templatefile("${path.module}/cloud-init/user-data.yml", {
       ssh_key  = local.ssh_key
-      hostname = local.names[count.index]
-      fqdn     = "${local.names[count.index]}.example.local"
+      hostname = "${local.hostname_base}-${count.index}"
+      fqdn     = "${local.hostname_base}-${count.index}.example.local"
     })
   }
 }
 
+# Fixed: Separate network config and metadata
 resource "libvirt_cloudinit_disk" "cidata" {
-  count     = length(local.names)
-  name      = "${local.names[count.index]}-init.iso"
+  count     = 4
+  name      = "${local.hostname_base}-${count.index}-init.iso"
   pool      = libvirt_pool.pool.name
   user_data = data.cloudinit_config.vm[count.index].rendered
 
+  # Network configuration as separate parameter
   network_config = yamlencode({
     version = 2
     ethernets = {
@@ -85,11 +86,11 @@ resource "libvirt_cloudinit_disk" "cidata" {
         match = {
           macaddress = local.macs[count.index]
         }
-        dhcp4     = false
+        dhcp4 = false
         addresses = ["${local.ips[count.index]}/24"]
         routes = [
           {
-            to  = "default"
+            to = "default"
             via = "10.0.0.1"
           }
         ]
@@ -100,9 +101,10 @@ resource "libvirt_cloudinit_disk" "cidata" {
     }
   })
 
+  # Metadata as separate parameter
   meta_data = yamlencode({
-    instance-id     = local.names[count.index]
-    local-hostname  = local.names[count.index]
+    instance-id = "${local.hostname_base}-${count.index}"
+    local-hostname = "${local.hostname_base}-${count.index}"
   })
 }
 
@@ -111,15 +113,14 @@ resource "libvirt_network" "net" {
   mode      = "nat"
   domain    = "example.local"
   addresses = ["10.0.0.0/24"]
-
   dhcp {
     enabled = false
   }
 }
 
 resource "libvirt_domain" "vm" {
-  count  = length(local.names)
-  name   = local.names[count.index]
+  count  = 4
+  name   = "${local.hostname_base}-${count.index}"
   vcpu   = 2
   memory = 2048
 
@@ -153,10 +154,6 @@ resource "libvirt_domain" "vm" {
   }
 }
 
-output "vm_ips" {
-  value = {
-    for idx in range(length(local.names)) :
-    local.names[idx] => local.ips[idx]
-  }
+output "ips" {
+  value = local.ips
 }
-

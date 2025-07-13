@@ -1,0 +1,14 @@
+$TTL    604800
+@       IN      SOA     ns.{{ dns_zone }}. root.{{ dns_zone }}. (
+                              2         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+@       IN      NS      ns.{{ dns_zone }}.
+ns      IN      A       {{ bind_domain_ip_map.proxy }}
+proxy   IN      A       {{ bind_domain_ip_map.proxy }}
+storage IN      A       {{ bind_domain_ip_map.storage }}
+mail    IN      A       {{ bind_domain_ip_map.mail }}
+db      IN      A       {{ bind_domain_ip_map.db }}

@@ -1,0 +1,29 @@
+- name: Install NFS server
+  apt:
+    name: nfs-kernel-server
+    state: present
+    update_cache: true
+
+- name: Create NFS export directory
+  file:
+    path: "{{ nfs_share_path }}"
+    state: directory
+    owner: nobody
+    group: nogroup
+    mode: '0777'
+
+- name: Configure /etc/exports
+  copy:
+    dest: /etc/exports
+    content: |
+      {{ nfs_share_path }} {{ nfs_clients | join('(' + nfs_export_options + ')\n' + nfs_share_path + ' ') }}({{ nfs_export_options }})
+  notify: Restart NFS
+
+- name: Export NFS directories
+  command: exportfs -a
+
+- name: Ensure NFS server is running
+  service:
+    name: nfs-kernel-server
+    state: started
+    enabled: true
