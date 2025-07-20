@@ -8,11 +8,22 @@
   file:
     path: "{{ nfs_mount_path }}"
     state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
 
 - name: Mount NFS share
   mount:
-    path: "{{ nfs_mount_path }}"
     src: "{{ nfs_server }}:{{ nfs_share_path }}"
+    path: "{{ nfs_mount_path }}"
     fstype: nfs
+    opts: rw,sync
     state: mounted
-    opts: rw
+
+- name: Ensure mount is persistent
+  mount:
+    src: "{{ nfs_server }}:{{ nfs_share_path }}"
+    path: "{{ nfs_mount_path }}"
+    fstype: nfs
+    opts: rw,sync
+    state: present

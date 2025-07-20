@@ -1,0 +1,14 @@
+<VirtualHost *:80>
+    ServerAdmin admin@infra.prog
+    ServerName storage.infra.prog
+
+    DocumentRoot /var/www/html/nextcloud
+    <Directory /var/www/html/nextcloud/>
+        Require all granted
+        AllowOverride All
+        Options FollowSymLinks MultiViews
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/nextcloud_error.log
+    CustomLog ${APACHE_LOG_DIR}/nextcloud_access.log combined
+</VirtualHost>

@@ -1,0 +1,44 @@
+---
+- name: Configure systemd-resolved DNS
+  become: true
+  lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: '^#?DNS='
+    line: 'DNS=10.0.0.10'
+    state: present
+
+- name: Ensure fallback DNS is set
+  become: true
+  lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: '^#?FallbackDNS='
+    line: 'FallbackDNS=1.1.1.1'
+    state: present
+
+- name: Restart systemd-resolved
+  become: true
+  systemd:
+    name: systemd-resolved
+    state: restarted
+    enabled: true
+
+- name: Add DNS nameservers to netplan config for ens3
+  become: true
+  blockinfile:
+    path: /etc/netplan/50-cloud-init.yaml
+    marker: "# {mark} ANSIBLE MANAGED DNS"
+    insertafter: '^\s*ethernets:\s*$'
+    block: |
+      ens3:
+        nameservers:
+          addresses:
+            - 10.0.0.10
+            - 1.1.1.1
+
+- name: Configure netplan (static IP and DNS)
+  template:
+    src: netplan.yaml.j2
+    dest: /etc/netplan/50-cloud-init.yaml
+    mode: 0644
+  notify: Apply netplan
+

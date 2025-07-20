@@ -15,25 +15,57 @@
     state: present
     update_cache: true
 
-- name: Download Nextcloud
+- name: Check if Nextcloud is already installed
+  stat:
+    path: /var/www/html/nextcloud
+  register: nextcloud_installed
+
+- name: Download Nextcloud only if not installed
   get_url:
-    url: http://download.nextcloud.com/server/releases/latest.zip
-    dest: /tmp/nextcloud.zip
+    url: http://download.nextcloud.com/server/releases/latest.tar.bz2
+    dest: /tmp/nextcloud.tar.bz2
+    mode: '0644'
+  when: not (nextcloud_installed.stat.exists)
 
 - name: Unarchive Nextcloud
   unarchive:
-    src: /tmp/nextcloud.zip
+    src: /tmp/nextcloud.tar.bz2
+    dest: /var/www/
     remote_src: yes
+    creates: /var/www/nextcloud
 
 - name: Set permissions
   file:
-    path: /var/www/html/nextcloud
+    path: /var/www/nextcloud
     owner: www-data
     group: www-data
     recurse: yes
 
-- name: Enable Apache rewrite
-  command: a2enmod rewrite
+- name: Enable required Apache modules
+  become: true
+  command: a2enmod rewrite headers env dir mime
+  notify: Reload Apache
+
+- name: Disable default Apache site
+  become: true
+  command: a2dissite 000-default.conf
+  args:
+    removes: /etc/apache2/sites-enabled/000-default.conf
+  notify: Reload Apache
+
+- name: Deploy Apache VirtualHost for Nextcloud
+  become: true
+  template:
+    src: nextcloud.conf.j2
+    dest: /etc/apache2/sites-available/nextcloud.conf
+  notify: Reload Apache
+
+- name: Enable Nextcloud site
+  become: true
+  command: a2ensite nextcloud.conf
+  args:
+    creates: /etc/apache2/sites-enabled/nextcloud.conf
+  notify: Reload Apache
 
 - name: Restart Apache
   service:

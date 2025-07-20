@@ -1,0 +1,5 @@
+mail_relay_host: mail.infra.prog
+
+nfs_server: 10.0.0.40
+nfs_share_path: /srv/nfs_share
+nfs_mount_path: /mnt/nfs

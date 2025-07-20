@@ -1,5 +1,6 @@
 - name: Install HAProxy
-  apt: haproxy
+  apt:
+    name: haproxy
     state: present
     update_cache: true
 

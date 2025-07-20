@@ -1,28 +1,34 @@
 ---
-- name: Configure Load Balancer
+- name: Setup Database Server (NFS export + PostgreSQL)
+  hosts: database_server
+  become: true
+  roles:
+    - nfs_export
+    - postgresql
+
+- name: Setup Load Balancer (DNS + HAProxy)
   hosts: load_balancer
   become: true
   roles:
     - bind9
     - haproxy
 
-- name: Configure Nextcloud Server
+- name: Setup Nextcloud Server (NFS client + Nextcloud)
   hosts: next_cloud
   become: true
   roles:
-    - nextcloud
     - nfs_client
+    - nextcloud
 
-- name: Configure Mail Server
+- name: Setup Mail Server (NFS client + Postfix)
   hosts: mail_server
   become: true
   roles:
-    - postfix
     - nfs_client
+    - postfix
 
-- name: Configure PostgreSQL Server
-  hosts: database_server
+- name: Configure DNS clients
+  hosts: all:!load_balancer
   become: true
   roles:
-    - postgresql
-    - nfs_export
+    - dns_client

@@ -12,11 +12,14 @@
     group: nogroup
     mode: '0777'
 
-- name: Configure /etc/exports
-  copy:
-    dest: /etc/exports
-    content: |
-      {{ nfs_share_path }} {{ nfs_clients | join('(' + nfs_export_options + ')\n' + nfs_share_path + ' ') }}({{ nfs_export_options }})
+- name: Add NFS export block to /etc/exports
+  blockinfile:
+    path: /etc/exports
+    block: |
+      {% for client in nfs_clients %}
+      {{ nfs_share_path }} {{ client }}({{ nfs_export_options }})
+      {% endfor %}
+    create: yes
   notify: Restart NFS
 
 - name: Export NFS directories

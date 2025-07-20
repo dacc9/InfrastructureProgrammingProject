@@ -30,7 +30,7 @@ ansible/playbooks/group_vars/*_secrets.yml
 
 # Cloud images and other large binaries
 project_pool/*
-
+cloud_image/*
 
 # Backup and temp files
 *~
