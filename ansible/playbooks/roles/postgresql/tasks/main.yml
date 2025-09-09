@@ -1,11 +1,72 @@
+---
 - name: Install PostgreSQL
   apt:
     name: postgresql
     state: present
     update_cache: true
 
+- name: Install python3-psycopg2 for PostgreSQL management
+  apt:
+    name: python3-psycopg2
+    state: present
+
 - name: Ensure PostgreSQL is started and enabled
   service:
     name: postgresql
     state: started
     enabled: true
+
+- name: Configure PostgreSQL to listen on all addresses
+  lineinfile:
+    path: /etc/postgresql/14/main/postgresql.conf
+    regexp: "^#?listen_addresses"
+    line: "listen_addresses = '*'"
+    backup: yes
+  notify: restart postgresql
+
+- name: Configure pg_hba.conf for local ansible user (peer auth)
+  lineinfile:
+    path: /etc/postgresql/14/main/pg_hba.conf
+    insertbefore: "^local   all             all                                     peer"
+    line: "local   all             ansible                                 peer"
+    backup: yes
+  notify: restart postgresql
+
+- name: Configure pg_hba.conf for Nextcloud remote connection
+  lineinfile:
+    path: /etc/postgresql/14/main/pg_hba.conf
+    insertafter: "^# IPv4 local connections:"
+    line: "host    nextcloud       nextcloud       10.0.0.20/32            md5"
+    backup: yes
+  notify: restart postgresql
+
+- name: Create nextcloud database
+  become_user: postgres
+  postgresql_db:
+    name: nextcloud
+    state: present
+
+- name: Create nextcloud database user
+  become_user: postgres
+  postgresql_user:
+    name: nextcloud
+    password: "{{ nextcloud_db_password }}"
+    db: nextcloud
+    priv: ALL
+    state: present
+
+- name: Create ansible database user (for management)
+  become_user: postgres
+  postgresql_user:
+    name: ansible
+    password: "{{ ansible_db_password | default('ansible123') }}"
+    role_attr_flags: CREATEDB,NOSUPERUSER
+    state: present
+
+- name: Grant ansible user access to nextcloud database
+  become_user: postgres
+  postgresql_user:
+    name: ansible
+    db: nextcloud
+    priv: ALL
+    state: present
