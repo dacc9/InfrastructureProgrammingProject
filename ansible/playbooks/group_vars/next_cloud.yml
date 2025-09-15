@@ -1,10 +1,10 @@
 nextcloud_db_name: nextcloud
 nextcloud_db_user: nextcloud
-nextcloud_db_password: nextcloud_pass
+nextcloud_db_password: "{{ vault_nextcloud_db_password }}"
 nextcloud_db_host: 10.0.0.40
 
 nextcloud_admin_user: admin
-nextcloud_admin_password: admin_pass
+nextcloud_admin_password: "{{ vault_nextcloud_admin_password }}"
 
 nfs_server: 10.0.0.40
 nfs_share_path: /srv/nfs_share

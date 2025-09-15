@@ -1,6 +1,6 @@
 nextcloud_db_name: nextcloud
 nextcloud_db_user: nextcloud
-nextcloud_db_password: nextcloud_pass
+nextcloud_db_password: "{{ vault_nextcloud_db_password }}"
 
 nfs_share_path: /srv/nfs_share
 nfs_clients:
