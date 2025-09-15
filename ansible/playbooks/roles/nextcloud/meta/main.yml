@@ -1,0 +1,4 @@
+---
+dependencies:
+  - role: dns_client
+  - role: nfs_client
